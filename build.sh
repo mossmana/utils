@@ -11,6 +11,7 @@
 DRY_RUN=0
 PATH_TO_ENGINE=${ENGINE_HOME}
 goma=""
+jflag=""
 
 bold=$(tput bold)
 normal=$(tput sgr0)
@@ -18,7 +19,7 @@ under=$(tput smul)
 bg=$(tput setab 4)
 fg=$(tput setaf 7)
 
-opts=("1" "2" "3" "4" "5" "6" "7");
+opts=("1" "2" "3" "4" "5" "6" "7")
 builds=("android_debug_unopt" "android_debug_unopt_arm64" "android_debug_unopt_x86" "android_debug_unopt_x64" "ios_debug_unopt" "ios_debug_sim_unopt" "ios_debug_sim_unopt_arm64")
 desc=("for device-side Android executables" "for newer 64-bit Android devices" "for x86 Android emulators" "for x64 Android emulators" "for device-side iOS executables" "for iOS Simulators" "for iOS simulators on arm64 Mac")
 selections=(" " " " " " " " " " " " " ")
@@ -40,6 +41,7 @@ function show_menu() {
   for i in ${!opts[@]}; do
     echo "[${selections[$i]}] ${bold}${bg}${fg} ${opts[$i]} ${normal} ${desc[$i]} (${under}${builds[$i]}${normal})"
   done
+  echo "${bold}q${normal} to quit"
 }
 
 function toggle() {
@@ -48,7 +50,7 @@ function toggle() {
   else
     selections[$1]="X"
   fi
-  local up=$((${#opts[@]}-$1))
+  local up=$((${#opts[@]}-$1+1))
   cursor_pos
   new_row=$(($row-$up))
   tput cup $(($new_row)) 1
@@ -62,20 +64,20 @@ function prompt() {
     tput sc
     read -n1 -p "Check an option (again to uncheck, ENTER when done): " choice
     if [[ ${choice} = "" ]]; then
-       echo -e "Done"
-       success=0
        break
+    elif [[ ${choice} = "q" ]]; then
+       echo -e "\nDone"
+       exit 0
     elif [[ " ${opts[*]} " = *" $choice "* ]]; then
        toggle $((choice - 1))
     else
        echo -e "\nInvalid option"
-       success=1
-       break
+       exit 1
     fi
   done
 }
 
-update() {
+function update() {
 
   # Update the Flutter Engine repo
   cd "${PATH_TO_ENGINE}/flutter"
@@ -83,6 +85,20 @@ update() {
 }
 
 build() {
+
+  # Exit if there are no selections
+  selected=0
+
+  for i in ${!selections[@]}; do
+    if [[ "${selections[$i]}" == "X" ]]; then
+       selected=1 ;
+    fi
+  done
+
+  if [[ ${selected} -eq 0 ]]; then
+    echo "Nothing checked. Exiting."
+    exit 0
+  fi
 
   # Switch to the engine directory 
   echo "cd ${PATH_TO_ENGINE}/.."
@@ -107,25 +123,25 @@ build() {
       if [[ DRY_RUN -ne 0 ]]; then
         ./flutter/tools/gn --unoptimized${gnargs[$i]}${goma}
       fi
-      echo "ninja -j 50 -C out/${builds[$i]}"
+      echo "ninja ${jflag}-C out/${builds[$i]}"
       if [[ DRY_RUN -ne 0 ]]; then
-        ninja -j 50 -C out/${builds[$i]}
+        ninja ${jflag}-C out/${builds[$i]}
       fi
     fi 
   done
 
   # Prepare and build host executable
-  echo "./flutter/tools/gn --unoptimized --xcode-symlinks"
+  echo "./flutter/tools/gn --unoptimized --xcode-symlinks${goma}"
   if [[ DRY_RUN -ne 0 ]]; then
-    ./flutter/tools/gn --unoptimized --xcode-symlinks
+    ./flutter/tools/gn --unoptimized --xcode-symlinks${goma}
   fi
-  echo "ninja -j 50 -C out/host_debug_unopt"
+  echo "ninja ${jflag}-C out/host_debug_unopt"
   if [[ DRY_RUN -ne 0 ]]; then
-    ninja -j 50 -C out/host_debug_unopt
+    ninja ${jflag}-C out/host_debug_unopt
   fi
 }
 
-while getopts 'up:h' arg; do
+while getopts 'up:g:h' arg; do
   case "$arg" in
     u)
       update
@@ -135,9 +151,10 @@ while getopts 'up:h' arg; do
       ;;
     g)
       goma=" --goma"
+      jflag="-j ${OPTARG} "
       ;;
     h)
-      echo "usage: $(basename $0) [-u -p (optional path to engine, defaults to \$ENGINE_HOME) -g (optionally use goma)]"
+      echo "usage: $(basename $0) [-u -p (optional path to engine, defaults to \$ENGINE_HOME) -g (optional number of parallel goma jobs)]"
       exit 1
       ;;
   esac
