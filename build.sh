@@ -8,8 +8,8 @@
 # See https://github.com/flutter/flutter/wiki/Compiling-the-engine
 ##############################################
 # Set DRY_RUN to 0 to see what commands will be run without actually executing them, 1 otherwise
-DRY_RUN=0
-PATH_TO_ENGINE=${ENGINE_HOME}
+DRY_RUN=1
+PATH_TO_ENGINE=${FLUTTER_ENGINE}
 goma=""
 jflag=""
 
@@ -131,9 +131,9 @@ build() {
   done
 
   # Prepare and build host executable
-  echo "./flutter/tools/gn --unoptimized --xcode-symlinks${goma}"
+  echo "./flutter/tools/gn --unoptimized${goma}"
   if [[ DRY_RUN -ne 0 ]]; then
-    ./flutter/tools/gn --unoptimized --xcode-symlinks${goma}
+    ./flutter/tools/gn --unoptimized${goma}
   fi
   echo "ninja ${jflag}-C out/host_debug_unopt"
   if [[ DRY_RUN -ne 0 ]]; then
@@ -150,11 +150,11 @@ while getopts 'up:g:h' arg; do
       PATH_TO_ENGINE="${OPTARG}"
       ;;
     g)
-      goma=" --goma"
+      goma=" --xcode-symlinks --goma"
       jflag="-j ${OPTARG} "
       ;;
     h)
-      echo "usage: $(basename $0) [-u -p (optional path to engine, defaults to \$ENGINE_HOME) -g (optional number of parallel goma jobs)]"
+      echo "usage: $(basename $0) [-u -p (optional path to engine, defaults to \$FLUTTER_ENGINE) -g (optional number of parallel goma jobs)]"
       exit 1
       ;;
   esac
