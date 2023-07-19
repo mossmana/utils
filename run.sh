@@ -4,7 +4,7 @@
 #
 # Script to run flutter against a local engine.
 ###########################################
-PATH_TO_ENGINE=${ENGINE_HOME}
+PATH_TO_ENGINE=${FLUTTER_ENGINE}
 bold=$(tput bold)
 normal=$(tput sgr0)
 opts=()
@@ -45,7 +45,7 @@ while getopts 'p:h' arg; do
       PATH_TO_ENGINE="${OPTARG}"
       ;;
     h)
-      echo "usage: $(basename $0) [-p (optional path to engine, defaults to \$ENGINE_HOME)]"
+      echo "usage: $(basename $0) [-p (optional path to engine, defaults to \$FLUTTER_ENGINE)]"
       exit 1
       ;;
   esac
@@ -53,7 +53,7 @@ done
 shift "$(($OPTIND -1))"
 
 if [ -z "${PATH_TO_ENGINE}" ]; then
-  echo "You must either set the ENGINE_HOME environment variable to the path of your engine or run again with -p"
+  echo "You must either set the \$FLUTTER_ENGINE environment variable to the path of your engine or run again with -p"
   exit 1
 fi
 
