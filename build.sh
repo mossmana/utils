@@ -3,7 +3,7 @@
 ##############################################
 # build.sh
 #
-# Bash script to compile the engine using goma (from macOS)
+# Bash script to compile the engine optionally using goma (from macOS)
 #
 # See https://github.com/flutter/flutter/wiki/Compiling-the-engine
 ##############################################
@@ -162,7 +162,7 @@ done
 shift "$(($OPTIND -1))"
 
 if [ -z "${PATH_TO_ENGINE}" ]; then
-  echo "You must either set the ENGINE_HOME environment variable to the path of your engine or run again with -p"
+  echo "You must either set the \$FLUTTER_ENGINE environment variable to the path of your engine or run again with -p"
   exit 1
 else
   echo "Building engine at ${PATH_TO_ENGINE}"
