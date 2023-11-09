@@ -8,7 +8,7 @@
 # See https://github.com/flutter/flutter/wiki/Compiling-the-engine
 ##############################################
 # Set DRY_RUN to 0 to see what commands will be run without actually executing them, 1 otherwise
-DRY_RUN=0
+DRY_RUN=1
 PATH_TO_ENGINE=${FLUTTER_ENGINE}
 goma=""
 jflag=""
