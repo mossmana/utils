@@ -58,5 +58,5 @@ if [ -z "${PATH_TO_ENGINE}" ]; then
 fi
 
 prompt
-echo -e "\nflutter run --local-engine-src-path $PATH_TO_ENGINE --local-engine=$BUILD"
-flutter run --local-engine-src-path $PATH_TO_ENGINE --local-engine=$BUILD
+echo -e "\nflutter run --local-engine-src-path $PATH_TO_ENGINE --local-engine=$BUILD --local-engine-host=host_debug_unopt_arm64"
+flutter run --local-engine-src-path $PATH_TO_ENGINE --local-engine=$BUILD --local-engine-host=host_debug_unopt_arm64
