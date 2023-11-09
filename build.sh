@@ -8,10 +8,11 @@
 # See https://github.com/flutter/flutter/wiki/Compiling-the-engine
 ##############################################
 # Set DRY_RUN to 0 to see what commands will be run without actually executing them, 1 otherwise
-DRY_RUN=1
+DRY_RUN=0
 PATH_TO_ENGINE=${FLUTTER_ENGINE}
 goma=""
 jflag=""
+mflag=" --mac-cpu arm64"
 
 bold=$(tput bold)
 normal=$(tput sgr0)
@@ -80,8 +81,14 @@ function prompt() {
 function update() {
 
   # Update the Flutter Engine repo
-  cd "${PATH_TO_ENGINE}/flutter"
-  git pull upstream main
+  echo "cd \"${PATH_TO_ENGINE}/flutter\""
+  if [[ DRY_RUN -ne 0 ]]; then
+    cd "${PATH_TO_ENGINE}/flutter"
+  fi
+  echo "git pull --rebase upstream main"
+  if [[ DRY_RUN -ne 0 ]]; then
+    git pull --rebase upstream main
+  fi
 }
 
 build() {
@@ -101,7 +108,7 @@ build() {
   fi
 
   # Switch to the engine directory 
-  echo "cd ${PATH_TO_ENGINE}/.."
+  echo "cd \"${PATH_TO_ENGINE}/..\""
   cd "${PATH_TO_ENGINE}/.."
 
   # Update dependencies
@@ -131,13 +138,17 @@ build() {
   done
 
   # Prepare and build host executable
-  echo "./flutter/tools/gn --unoptimized${goma}"
+  echo "./flutter/tools/gn --unoptimized${mflag}${goma}"
   if [[ DRY_RUN -ne 0 ]]; then
-    ./flutter/tools/gn --unoptimized${goma}
+    ./flutter/tools/gn --unoptimized${mflag}${goma}
   fi
-  echo "ninja ${jflag}-C out/host_debug_unopt"
+  arch=""
+  if [ "${mflag}" ]; then
+    arch="_arm64"
+  fi 
+  echo "ninja ${jflag}-C out/host_debug_unopt${arch}"
   if [[ DRY_RUN -ne 0 ]]; then
-    ninja ${jflag}-C out/host_debug_unopt
+    ninja ${jflag}-C out/host_debug_unopt${arch}
   fi
 }
 
@@ -152,6 +163,7 @@ while getopts 'up:g:h' arg; do
     g)
       goma=" --xcode-symlinks --goma"
       jflag="-j ${OPTARG} "
+      echo "goma: ${goma}, jflag: ${jflag}"
       ;;
     h)
       echo "usage: $(basename $0) [-u -p (optional path to engine, defaults to \$FLUTTER_ENGINE) -g (optional number of parallel goma jobs)]"
